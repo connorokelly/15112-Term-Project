@@ -1,0 +1,1265 @@
+import eventBasedAnimation
+from Tkinter import *
+import random
+import time
+
+PADDLESPEED = 40
+SCORE = 5
+RESPONSE = 400
+
+
+
+
+class Settings(object):
+	#this class creates settings page
+	def __init__(self, width, height):
+		self.width = width
+		self.height = height
+		self.x0 = .01 * self.width
+		self.y0 = .01 * self.height + 10
+		self.x1 = .15 * self.width + 40
+		self.y1 = .1 * self.height + 30
+		self.x2 = (self.x0 + self.x1) / 2.
+		self.y2 = (self.y0 + self.y1) / 2.
+		self.controlColor = "lightblue"
+		self.easyColor = "white"
+		self.normalColor = "blue"
+		self.insaneColor = "white"
+		self.onColor = "blue"
+		self.offColor = "white"
+		self.SPEED = 2.9
+		self.PADDLESPEED = 30
+		self.AILEVEL = 20
+		self.SCORE = 5
+		self.RECOVERSPOT = True
+		self.RESPONSE = 400
+		self.victory = False
+		if self.victory == True:
+			self.BOff = "blue"
+			self.BOn = "white"
+		elif self.victory == False:
+			self.BOff = "white"
+			self.BOn = "white"
+
+	def drawSettings(self, canvas):
+		canvas.create_text(self.width/2., self.height/8. - 30, text= "SETTINGS", \
+			font="Chalkduster 90 bold")
+		canvas.create_oval(self.x0, self.y0, self.x1, self.y1, fill = self.controlColor, outline = "lightblue")
+		canvas.create_text(self.x2, self.y2, text = "MAIN MENU", font = "Chalkduster 26")
+		self.drawDifficulty(canvas)
+		self.drawInvertMode(canvas)
+		self.drawBonusMode(canvas)
+	
+	def drawDifficulty(self, canvas):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		canvas.create_text(self.width/2., self.height/4 + 30., text= "DIFFICULTY", font= "Chalkduster 40")
+		canvas.create_text(self.width/2. - length, self.height/4. + spacing, text= "EASY", font = "Chalkduster 30", fill = self.easyColor)
+		canvas.create_text(self.width/2., self.height/4. + spacing, text= "NORMAL", font= "Chalkduster 30", fill = self.normalColor)
+		canvas.create_text(self.width/2. + length, self.height/4. + spacing, text= "INSANE", font = "Chalkduster 30", fill = self.insaneColor)
+
+
+	def drawInvertMode(self, canvas):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		canvas.create_text(self.width/2. - .75 *length, self.height/2. + spacing, text= "WRAP AROUND", font = "Chalkduster 40", fill = "black")
+		canvas.create_text(self.width/2. - .95 * length, self.height/2. + 2 * spacing, text= "ON", font= "Chalkduster 30", fill = self.onColor)
+		canvas.create_text(self.width/2. - .58 *length, self.height/2. + 2 * spacing, text= "OFF", font= "Chalkduster 30", fill = self.offColor)
+		
+
+	def drawBonusMode(self, canvas):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		canvas.create_text(self.width/2. + .75 * length, self.height/2. + spacing, text= "SWITCH UP", font = "Chalkduster 40", fill = "black")
+		if self.victory == False:
+			canvas.create_text(self.width/2. + .75 * length, self.height/2. + 2 * spacing, text= "WIN ON 'INSANE' DIFFICULTY TO UNLOCK", font = "Chalkduster 20", fill = "white")
+		elif self.victory == True:
+			canvas.create_text(self.width/2. + .95 * length, self.height/2. + 2 * spacing, text= "Nah", font= "Chalkduster 30", fill = self.BOff)
+			canvas.create_text(self.width/2. + .58 *length, self.height/2. + 2 * spacing, text= "Yeah", font= "Chalkduster 30", fill = self.BOn)
+
+
+
+	def containsB6(self, x, y):
+		return self.x0 <= x <= self.x1 and self.y0 <= y <= self.y1
+
+	def containsEasy(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. - radius - length <= x <= self.width/2. + radius - length \
+		       and self.height/4. + spacing - .3 * radius <= y <= self.height/4. + spacing + .3 * radius
+
+	def containsNormal(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. - radius <= x <= self.width/2. + radius \
+		       and self.height/4. + spacing - .3 * radius <= y <= self.height/4. + spacing + .3 * radius
+
+
+	def containsInsane(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. - radius + length <= x <= self.width/2. + radius + length \
+		       and self.height/4. + spacing - .3 * radius <= y <= self.height/4. + spacing + .3 * radius
+
+	def containsOn(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. - .95 * length - 40 <= x <= self.width/2. - .95 * length + 40 and \
+		       self.height/2. + 2 * spacing - 40 <= y <= self.height/2. + 2 * spacing + 40
+
+	def containsOff(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. - .58 *length - 40 <= x <= self.width/2. - .58 *length + 40 and \
+		       self.height/2. + 2 * spacing - 40 <= y <= self.height/2. + 2 * spacing + 40
+
+	def containsBOn(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. + .58 *length - 40 <= x <= self.width/2. + .58 *length + 40 and \
+		       self.height/2. + 2 * spacing - 40 <= y <= self.height/2. + 2 * spacing + 40
+
+
+	def containsBOff(self, x, y):
+		length = self.width/3.
+		spacing = 100
+		radius = 100
+		return self.width/2. + .95 * length - 40 <= x <= self.width/2. + .95 * length + 40 and \
+		       self.height/2. + 2 * spacing - 40 <= y <= self.height/2. + 2 * spacing + 40
+
+	def difficulty(self):
+		if self.easyColor == "blue":
+			self.SPEED = 2.4
+			self.AILEVEL = 18
+			self.RECOVERSPOT = False
+		elif self.normalColor == "blue":
+			self.SPEED = 2.9
+			self.AILEVEL = 20
+			self.RECOVERSPOT = True
+		elif self.insaneColor == "blue":
+			self.SPEED = 3.2
+			self.AILEVEL = 34
+			self.RECOVERSPOT = True
+
+
+
+class Controls(object):
+	#this class creates the controls page
+	def __init__(self, width, height):
+		self.width = width
+		self.height = height
+		self.x0 = .01 * self.width
+		self.y0 = .01 * self.height + 10
+		self.x1 = .15 * self.width + 40
+		self.y1 = .1 * self.height + 30
+		self.x2 = (self.x0 + self.x1) / 2.
+		self.y2 = (self.y0 + self.y1) / 2.
+		self.x3 = .2 * self.width
+		self.margin = 50
+		self.x4 = self.x2 - .33 * self.margin - 40
+		self.y4 = self.y2 + 6* self.margin + 30
+		self.x5 = self.x2 + 1.67 * self.margin - 40
+		self.y5 = self.y2 + 8 * self.margin + 30
+		self.x6 = (self.x4 + self.x5) / 2.
+		self.y6 = (self.y4 + self.y5) / 2.
+		self.controlColor = "lightblue"
+		self.outsideColorW = "grey30"
+		self.insideColorW = "black"
+		self.outsideColorS = "grey30"
+		self.insideColorS = "black"
+		self.reverseColor = "lightblue"
+		self.reverseColorS = "lightblue"
+		self.Wfont = "Times 60 bold"
+		self.Sfont = "Times 60 bold"
+		self.keyLength = self.x5 - self.x4
+		self.gap = 17
+		self.gap2 = 17
+		self.Wfont2 = "Times 60 bold"
+		self.Sfont2 = "Times 60 bold"
+		self.gap3 = 17
+		self.gap4 = 17
+		self.reverseColor2 = "lightblue"
+		self.reverseColorS2 = "lightblue"
+
+	def drawControls(self, canvas):
+		self.drawTitle(canvas)
+		self.drawArrowKeys(canvas)
+		self.drawLetterKeys(canvas)
+		self.drawArrowKeys2(canvas)
+		self.drawLetterKeys2(canvas)
+		self.drawMessages(canvas)
+		self.drawMessages2(canvas)
+		
+		
+
+	def drawTitle(self, canvas):
+		canvas.create_text(self.width/2., self.height/8 - 30, text= "CONTROLS", font="Chalkduster 90 bold")
+		canvas.create_text(self.width/2., self.height/8 + 50, text= "*HOVER OVER KEYS WITH MOUSE*", font="Chalkduster 20")		
+		canvas.create_text(self.x3, .3 * self.height, text= "1 PLAYER", font = "Chalkduster 40 bold")
+		canvas.create_oval(self.x0, self.y0, self.x1, self.y1, fill = self.controlColor, outline = "lightblue")
+		canvas.create_text(self.x2, self.y2, text = "MAIN MENU", font = "Chalkduster 26")
+		canvas.create_text(.8 * self.width, .3 * self.height, text = "2 PLAYER", font = "Chalkduster 40 bold")
+
+
+	def drawLetterKeys(self, canvas):
+		canvas.create_rectangle(self.x4, self.y2 + 4* self.margin,\
+		 self.x5, self.y2 + 6 * self.margin, width = 5, fill = self.insideColorW, outline = self.outsideColorW)
+		canvas.create_text((self.x4 + self.x5) / 2., self.y2 + 5 * self.margin, text = "W", font = self.Wfont, fill = "white")
+		canvas.create_rectangle(self.x4, self.y4, \
+			self.x5, self.y5, width = 5, fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_text(self.x6, self.y6, text = "S", font = self.Sfont, fill = "white")
+		canvas.create_text(self.x6 + 115, self.y6 + 80, text = "PLAYER 1", font = "Chalkduster 20", fill = "white")
+
+	def drawLetterKeys2(self, canvas):
+		jump = .59 * self.width
+		canvas.create_rectangle(self.x4 + jump, self.y2 + 4* self.margin,\
+		 self.x5 + jump, self.y2 + 6 * self.margin, width = 5, fill = self.insideColorW, outline = self.outsideColorW)
+		canvas.create_text((self.x4 + self.x5) / 2. + jump, self.y2 + 5 * self.margin, text = "W", font = self.Wfont2, fill = "white")
+		canvas.create_rectangle(self.x4 + jump, self.y4, \
+			self.x5 + jump, self.y5, width = 5, fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_text(self.x6 + jump, self.y6, text = "S", font = self.Sfont2, fill = "white")
+		canvas.create_text(self.x6 + jump, self.y6 + 80, text = "PLAYER 1", font = "Chalkduster 20", fill = "white")
+		canvas.create_text(self.x6 + jump + self.width/4.3, self.y6 + 80, text = "PLAYER 2", font = "Chalkduster 20", fill = "white")
+
+
+	def drawArrowKeys(self, canvas):
+		x0= (self.x4 + self.keyLength + 120 + self.x5 + self.keyLength + 120) /2.
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y0= self.y4
+		y1= self.y5 - .4 * self.keyLength
+		y2= self.y2 + 4*self.margin + .4 * self.keyLength
+		y3= self.y2 + 6*self.margin
+		keyLength = (self.x5 - self.x4) * .6 
+		space = 2 * self.margin
+		canvas.create_rectangle(x1, self.y4, x2, y1, width = 5,\
+		 fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_rectangle(x1, y2, \
+			x2, y3, width = 5, fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_polygon((x0, y2 + .6 * self.gap, x1 + self.gap, y3 - self.gap, x2 - self.gap, y3 - self.gap), fill = "white")
+		canvas.create_polygon((x0, y2 + keyLength + self.margin / 2. +\
+		 keyLength - .4 *self.gap2, x1 + self.gap2, y3 + self.margin/2. + \
+		 1.2 * self.gap2, x2 - self.gap2, y3 + self.margin/2. + 1.2 * self.gap2),  fill = "white")
+
+
+	def drawArrowKeys2(self, canvas):
+		x0= (self.x4 + self.keyLength + 120 + self.x5 + self.keyLength + 120) /2.
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y0= self.y4
+		y1= self.y5 - .4 * self.keyLength
+		y2= self.y2 + 4*self.margin + .4 * self.keyLength
+		y3= self.y2 + 6*self.margin
+		jump = .62 * self.width
+		keyLength = (self.x5 - self.x4) * .6 
+		space = 2 * self.margin
+		canvas.create_rectangle(x1 + jump, self.y4, x2 + jump, y1, width = 5,\
+		 fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_rectangle(x1 + jump, y2, \
+			x2 + jump, y3, width = 5, fill = self.insideColorS, outline = self.outsideColorS)
+		canvas.create_polygon((x0 + jump, y2 + .6 * self.gap4, x1 + self.gap4 + jump, y3 - self.gap4, x2 - self.gap4 + jump, y3 - self.gap4), fill = "white")
+		canvas.create_polygon((x0 + jump, y2 + keyLength + self.margin / 2. + \
+			keyLength - .4 *self.gap3, x1 + self.gap3 + jump, y3 +\
+			 self.margin/2. + 1.2 * self.gap3, x2 - self.gap3 + jump, y3 + self.margin/2. + 1.2 * self.gap3),  fill = "white")
+
+
+	def drawMessages(self, canvas):
+		x0 = (self.x2 + 100 + (self.x4 + self.x5)/2. + 110)/2.
+		y0 = (self.y2 + 5*self.margin + (self.y4 + self.y5) / 2) / 2.
+		canvas.create_text(x0, y0, text = "OR", font= "Chalkduster 30 bold", fill = "white")
+		canvas.create_text(self.x2 + 100, self.y2 + 5*self.margin, text = "'Up'", font = "Chalkduster 20", fill = self.reverseColor)
+		canvas.create_text((self.x4 + self.x5)/2. + 110, (self.y4 + self.y5) / 2, text = "'Down'", font = "Chalkduster 20", fill = self.reverseColorS)
+
+	def drawMessages2(self, canvas):
+		x0 = (self.x2 + 100 + (self.x4 + self.x5)/2. + 110)/2.
+		y0 = (self.y2 + 5*self.margin + (self.y4 + self.y5) / 2) / 2.
+		jump = .61 * self.width
+		canvas.create_text(self.x2 + 100 + jump, self.y2 + 5*self.margin, text = "'Up'", font = "Chalkduster 20", fill = self.reverseColor2)
+		canvas.create_text((self.x4 + self.x5)/2. + 110 + jump, (self.y4 + self.y5) / 2, text = "'Down'", font = "Chalkduster 20", fill = self.reverseColorS2)
+
+	def containsW2(self, x, y):
+		jump = .59 * self.width
+		return self.x2 - self.margin + jump < x < self.x2 + self.margin + jump and \
+		       self.y2 + 4*self.margin < y < self.y2 + 6* self.margin
+
+	def containsS2(self, x, y):
+		jump = .59 * self.width
+		return self.x4 + jump < x < self.x5 + jump and self.y4 < y < self.y5
+
+	def containsB5(self, x, y):
+		return self.x0 <= x <= self.x1 and self.y0 <= y <= self.y1
+
+	def containsW(self, x, y):
+		return self.x2 - self.margin < x < self.x2 + self.margin and \
+		       self.y2 + 4*self.margin < y < self.y2 + 6* self.margin
+
+	def containsS(self, x, y):
+		return self.x4 < x < self.x5 and self.y4 < y < self.y5
+
+	def containsUp(self, x, y):
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y2= self.y2 + 4*self.margin + .4 * self.keyLength
+		y3= self.y2 + 6*self.margin
+		return x1 < x < x2 and y2 < y < y3
+
+	def containsDown(self, x, y):
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y1= self.y4
+		y2 = self.y5 - .4 * self.keyLength
+		return x1 < x < x2 and y1 < y < y2
+
+	def containsUp2(self, x, y):
+		jump = .62 * self.width
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y2= self.y2 + 4*self.margin + .4 * self.keyLength
+		y3= self.y2 + 6*self.margin
+		return x1 + jump < x < x2 + jump and y2 < y < y3
+
+	def containsDown2(self, x, y):
+		jump = .62 * self.width
+		x1= self.x4 + self.keyLength + 120
+		x2= self.x5 + self.keyLength + 120
+		y1= self.y4
+		y2 = self.y5 - .4 * self.keyLength
+		return x1 + jump< x < x2 + jump and y1 < y < y2
+
+
+class onePlayer(object):
+#this class draws the scores and the dash lines on the one player and two player two screen
+	def __init__(self, width, height):
+		self.height = height
+		self.width = width
+		self.x0 = width / 2.
+		self.x1 = width / 2.
+		self.y0 = 0
+		self.y1 = 10
+		self.margin = 10
+		self.p1score = 0
+		self.p2score = 0
+		
+		
+
+	def draw(self, canvas):
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		(x2, y2, x3, y3) = (self.width / 2. - self.width/8., self.height / 8.,\
+		 self.width / 2. + self.width/8., self.height / 8.)
+		while y1 < self.height:
+			canvas.create_line(x0, y0, x1, y1, fill = "black", width = 1)
+			y0 += 2 * self.margin
+			y1 += 2 * self.margin
+		canvas.create_text(x2, y2, text = str(self.p1score), fill = "black", font = "Chalkduster 50 bold")
+		canvas.create_text(x3, y3, text = str(self.p2score), fill = "black", font = "Chalkduster 50 bold")
+	
+	def drawStartText(self, canvas):
+		drop = self.height/5.
+		canvas.create_text(self.width / 2., self.height / 2. - drop,\
+		 text = "PRESS 'SPACE' TO PLAY", fill = "black", font = "Chalkduster 40")
+		canvas.create_text(self.width / 2., self.height / 2. - drop/2.,\
+		      text = "PRESS 'ESC' TO PAUSE", fill = "black", font = "Chalkduster 25")
+		
+
+class buttons(object):
+	#this class creates the buttons on the main menu
+	def __init__(self, width, height):
+		self.spacing = width / 30.
+		self.x0 = width / 2. - 5 * self.spacing
+		self.y0 = height / 2. - 1.5 * self.spacing
+		self.x1 = width / 2. + 5 * self.spacing
+		self.y1 = height / 2. + 1.5 * self.spacing
+		self.margin = (self.y1 - self.y0) / 2.
+		self.x2 = (self.x0 + self.x1) / 2.
+		self.y2 = (self.y0 + self.y1) / 2.
+		self.y3 = self.y2 + self.y1-self.y0 + self.margin
+		self.x4 = self.x0 - 10 * self.spacing - self.margin
+		self.y4 = (self.y0 + self.y2) / 2. + 3 * self.spacing
+		self.x5 = self.x4 + 10 * self.spacing
+		self.y5 = self.y0 + self.y2 + self.y1 - self.y0
+		self.x6 = self.x5 + 2 * self.margin + 10 * self.spacing
+		self.x7 = self.x6 + 10 * self.spacing
+		self.x8 = (self.x4 + self.x5) / 2.
+		self.x9 = (self.x6 + self.x7) / 2.
+		self.y6 = (self.y4 + self.y5) / 2.
+		self.thickness = 2
+		self.button1Color = "lightblue"
+		self.text1Color = "black"
+		self.button2Color = "lightblue"
+		self.text2Color = "black"
+		self.button3Color = "lightblue"
+		self.button4Color = "lightblue"
+		self.text3Color = "black"
+		self.text4Color = "black"
+
+
+	def draw(self, canvas):
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		for i in xrange(2):
+			if i == 0:
+				canvas.create_oval(self.x0, self.y0, self.x1, self.y1,\
+			 outline = "lightblue", fill = self.button1Color, width = self.thickness)
+				canvas.create_text(self.x2, self.y2, text = "1 PLAYER",\
+				 font = "Chalkduster 42 bold", fill = self.text1Color)
+			elif i == 1:
+				canvas.create_oval(x0, y0, x1, y1,\
+			 outline = "lightblue", fill = self.button2Color, width = self.thickness)
+				canvas.create_text(self.x2, self.y3, text = "2 PLAYER",\
+				 font = "Chalkduster 42 bold", fill = self.text2Color)
+			y0 += 3 * self.spacing + self.margin
+			y1 += 3 * self.spacing + self.margin
+		canvas.create_oval(self.x4, self.y4, self.x5, self.y5, fill = self.button3Color, outline = "lightblue", width = self.thickness)
+		canvas.create_oval(self.x6, self.y4, self.x7, self.y5, fill = self.button4Color, outline = "lightblue", width = self.thickness)
+		canvas.create_text(self.x8, self.y6, text = "CONTROLS", \
+			font = "Chalkduster 22", fill = self.text3Color)
+		canvas.create_text(self.x9, self.y6, text = "SETTINGS",\
+		 font = "Chalkduster 22", fill = self.text4Color)
+
+	def containsB1(self, x, y):
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		return (x0 <= x <= x1 and y0 <= y <= y1)
+
+	def containsB2(self, x, y):
+		(x0, y0, x1, y1) = (self.x0, self.y0 + 3 * self.spacing + self.margin,\
+			self.x1, self.y1 + 3 * self.spacing + self.margin)
+		return (x0 <= x <= x1 and y0 <= y <= y1)
+
+	def containsB3(self, x, y):
+		return (self.x4 <= x <= self.x5 and self.y4 <= y <= self.y5)
+
+	def containsB4(self, x, y):
+		return (self.x6 <= x <= self.x7 and self.y4 <= y <= self.y5)
+
+
+class mainMenu(object):
+	#this class creates the main menu page and also 
+	#is called to draw the same background in all of the pages
+	def __init__(self, width, height):
+		self.x0 = 0
+		self.y0 = 0
+		self.x1 = width
+		self.y1 = height
+		self.title_x = width / 2.
+		self.title_y = height / 5.
+		
+
+
+
+	def drawBackground(self, canvas):
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		canvas.create_rectangle(x0, y0, x1, y1, fill="lightblue")
+	
+
+	def drawTitle(self, canvas):
+		(x0, y0) = (self.title_x, self.title_y)
+		canvas.create_text(x0, y0, text = "PONG", font = "Chalkduster 170 bold", \
+			fill = "black")
+
+
+class ball(object):
+	def __init__(self, width, height, Settings):
+		self.height = height
+		self.width = width
+		# self.player1Paddle = player1Paddle(self.width, self.height)
+		self.ballSize =  width / 80.
+		self.x0 = width / 2. - self.ballSize / 2.
+		self.y0 = height / 2. - self.ballSize / 2.
+		self.x1 = width / 2. + self.ballSize / 2.
+		self.y1 = height / 2. + self.ballSize / 2.
+		self.initXspeed = random.choice([-5, 5])
+		self.initYspeed = random.choice([-4, -3, -2, 2, 3, 4, 5])
+		self.dx = self.initXspeed
+		self.dy = self.initYspeed
+		self.ballColor = "white"
+		self.outLine = "black"
+		self.Settings = Settings
+
+		
+
+	def draw(self, canvas, Settings):
+		if self.Settings.BOn == "blue":
+			self.ballColor = "black"
+		elif self.Settings.BOff == "blue":
+			self.ballColor = "white"
+		gap = 4.2
+		drop = 1
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		canvas.create_oval(x0, y0, x1, y1, outline = self.outLine, fill = self.ballColor)
+		
+
+	def startPlaying(self, Settings):
+		#this function is constantly called and moves the ball
+		if self.inYBounds(Settings) == False:
+			self.dy = -self.dy
+			if self.dy > 0:
+				self.y0 += 1
+				self.y1 += 1
+			elif self.dy < 0:
+				self.y0 -= 1
+				self.y1 -= 1
+		self.x0 += int(self.Settings.SPEED * self.dx)
+		self.x1 += int(self.Settings.SPEED * self.dx)
+		self.y0 += int(self.Settings.SPEED * self.dy)
+		self.y1 += int(self.Settings.SPEED * self.dy)
+		
+
+	
+	def inYBounds(self, Settings):
+		#controls the y bounds of the ball
+		return self.y0 >= -self.Settings.SPEED * self.dy and self.y1 <= self.height - self.Settings.SPEED * self.dy
+
+			
+class player1Paddle(object):
+	#deals with the left paddle on 1player and 2player mode
+	def __init__(self, width, height, ball, Settings):
+		self.width = width
+		self.height = height
+		self.spacing = width / 30.
+		self.x0 = self.spacing + 50
+		self.y0 = height / 2. - 2 * self.spacing
+		self.x1 = 1.2 * self.spacing + 50
+		self.y1 = height / 2. + 2 * self.spacing
+		self.chunk = (self.y1 - self.y0) / 5.
+		self.ball = ball
+		self.dy = 0
+		self.paddleLength = self.y1 - self.y0
+		self.offScreen = False
+		self.Settings = Settings
+		self.paddleColor = "black"
+
+	def draw(self, canvas, Settings):
+		if self.Settings.BOn == "blue":
+			self.paddleColor = "white"
+		elif self.Settings.BOff == "blue":
+			self.paddleColor = "black"
+		if self.Settings.onColor == "blue":
+			if self.y1 < 0:
+				self.y0 = self.height + 10
+				self.y1 = self.y0 + self.paddleLength
+				self.offScreen = True
+			elif self.offScreen == False and  self.y0 > self.height:
+				self.y1 = -10
+				self.y0 = self.y1 - self.paddleLength
+			self.offScreen = False
+		elif self.Settings.offColor == "blue":
+			if self.y0 < 0:
+				self.y0 = 0
+				self.y1 = self.paddleLength
+			elif self.y1 > self.height:
+				self.y1 = self.height
+				self.y0 = self.y1 - self.paddleLength
+		self.topCorner = range(int(round(self.y0)) - 10, int((self.y0 + self.chunk)))
+		self.upperPortion = range(int(self.y0 + self.chunk), int(self.y0 + 2*self.chunk))
+		self.middlePortion = range(int(self.y0 + 2*self.chunk), int(self.y0 + 3*self.chunk))
+		self.lowerPortion = range(int(self.y0 + 3*self.chunk), int(self.y0 + 4*self.chunk))
+		self.bottomCorner = range(int(self.y0 + 4*self.chunk), int(self.y1 + 1) + 10)
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+	
+		canvas.create_oval(x0, y0, x1, y1, outline = "black", fill = self.paddleColor, width=3)
+
+
+	def movePaddle(self, dy):
+		#moves the paddle up and down
+		self.y0 += int(dy)
+		self.y1 += int(dy)
+		
+
+
+
+class player2Paddle(object):
+	#controls the right paddle in 1player and 2player modes
+	def __init__(self, width, height, ball, Settings):
+		self.height = height
+		self.width = width
+		self.x0 = self.width - self.width/30. - 50
+		self.y0 = self.height / 2. - 2 * self.width/30.
+		self.x1 = self.width - 1.2 * self.width/30. - 50
+		self.y1 = self.height / 2 + 2 * self.width/30.
+		self.ball = ball
+		self.gamePlayWidth = 640 - width/15.
+		self.offScreen = False
+		self.paddleLength = self.y1 - self.y0
+		self.Settings = Settings
+		self.paddleColor = "black"
+
+		
+
+	def draw(self, canvas, Settings):
+		if self.Settings.BOn == "blue":
+			self.paddleColor = "white"
+		elif self.Settings.BOff == "blue":
+			self.paddleColor = "black"
+		if self.Settings.onColor == "blue":
+			if self.y1 < 0:
+				self.y0 = self.height + 10
+				self.y1 = self.y0 + self.paddleLength
+				self.offScreen = True
+			elif self.offScreen == False and  self.y0 > self.height:
+				self.y1 = -10
+				self.y0 = self.y1 - self.paddleLength
+			self.offScreen = False
+		elif self.Settings.offColor == "blue":
+			if self.y0 < 0:
+				self.y0 = 0
+				self.y1 = self.paddleLength
+			elif self.y1 > self.height:
+				self.y1 = self.height
+				self.y0 = self.y1 - self.paddleLength
+		self.chunk = (self.y1 - self.y0) / 5.
+		self.topCorner = range(int(self.y0) - 10, int(self.y0 + self.chunk))
+		self.upperPortion = range(int(self.y0 + self.chunk), int(self.y0 + 2*self.chunk))
+		self.middlePortion = range(int(self.y0 + 2*self.chunk), int(self.y0 + 3*self.chunk))
+		self.lowerPortion = range(int(self.y0 + 3*self.chunk), int(self.y0 + 4*self.chunk))
+		self.bottomCorner = range(int(self.y0 + 4*self.chunk), int(self.y1 + 1) + 10)
+		(x0, y0, x1, y1) = (self.x0, self.y0, self.x1, self.y1)
+		canvas.create_oval(x0, y0, x1, y1, outline = "black", fill= self.paddleColor, width=3)
+
+
+	
+
+
+	def predictY(self, ball):
+		#this is the AI function for 1player mode
+		fakeDY = self.ball.dy
+		predictedY = (self.ball.y0 + self.ball.y1) / 2.
+		self.yGuess = predictedY
+		steps = (25/30. * self.width - self.ball.x0) / float(self.ball.dx)
+		for i in xrange(int(steps)):
+			if self.yGuess < 0:
+				fakeDY = -fakeDY
+				self.yGuess += fakeDY
+			elif self.yGuess > self.height:
+				fakeDY = -fakeDY
+				self.yGuess += 1.5 * fakeDY
+			self.yGuess += fakeDY
+		return self.yGuess
+
+
+	def movePaddle(self, dy):
+		#moves right paddle
+		self.y0 += int(dy)
+		self.y1 += int(dy)
+
+
+
+
+
+
+
+class LetsPlayPong(eventBasedAnimation.Animation):
+	#makes everything work
+	def onInit(self): 
+		self.page = "mainMenu"
+		self.Settings = Settings(self.width, self.height)
+		self.buttons = buttons(self.width, self.height)
+		self.mainMenu = mainMenu(self.width, self.height)
+		self.ball = ball(self.width, self.height, self.Settings)
+		self.player1Paddle = player1Paddle(self.width, self.height, self.ball, self.Settings)
+		self.player2Paddle = player2Paddle(self.width, self.height, self.ball, self.Settings)
+		self.height = self.player2Paddle.height
+		self.onePlayer = onePlayer(self.width, self.height)
+		self.Controls = Controls(self.width, self.height)
+		self.firstMove = True
+		self.moveUp = False
+		self.moveDown = False
+		self.moveUp2 = False
+		self.moveDown2 = False
+		self.pause = False
+		self.pauseB1 = "black"
+		self.pauseB2 = "black"
+		
+	
+
+
+	def onMouse(self, event):
+		#deals with mouse click events
+		if self.page == "mainMenu":
+			if self.buttons.containsB1(event.x, event.y):
+				self.page = "1PLAYER"
+			elif self.buttons.containsB2(event.x, event.y):
+				self.page = "2PLAYER"
+			elif self.buttons.containsB3(event.x, event.y):
+				self.page = "CONTROLS"
+			elif self.buttons.containsB4(event.x, event.y):
+				self.page = "SETTINGS"
+		elif self.page == "CONTROLS":
+			if self.Controls.containsB5(event.x, event.y):
+				self.page = "mainMenu"
+		elif self.page == "SETTINGS":
+			if self.Settings.containsB6(event.x, event.y):
+				self.page = "mainMenu"
+			if self.Settings.containsEasy(event.x, event.y):
+				self.Settings.easyColor = "blue"
+				self.Settings.normalColor = "white"
+				self.Settings.insaneColor = "white"
+			elif self.Settings.containsNormal(event.x, event.y):
+				self.Settings.easyColor = "white"
+				self.Settings.normalColor = "blue"
+				self.Settings.insaneColor = "white"
+			elif self.Settings.containsInsane(event.x, event.y):
+				self.Settings.easyColor = "white"
+				self.Settings.normalColor = "white"
+				self.Settings.insaneColor = "blue"
+			if self.Settings.containsOn(event.x, event.y):
+				self.Settings.onColor = "blue"
+				self.Settings.offColor = "white"
+			elif self.Settings.containsOff(event.x, event.y):
+				self.Settings.offColor = "blue"
+				self.Settings.onColor = "white"
+			if self.Settings.containsBOn(event.x, event.y):
+				self.Settings.BOn = "blue"
+				self.Settings.BOff = "white"
+			elif self.Settings.containsBOff(event.x, event.y):
+				self.Settings.BOff = "blue"
+				self.Settings.BOn = "white"
+		elif self.page == "1PLAYER" or self.page == "2PLAYER":
+			if self.pause == True:
+	
+				if self.containsPauseB1(event.x, event.y):
+					self.page = "mainMenu"
+					self.resetAll()
+					self.ball.x0 = self.width / 2. - self.ball.ballSize / 2.
+					self.ball.y0 = self.height / 2. - self.ball.ballSize / 2.
+					self.ball.x1 = self.width / 2. + self.ball.ballSize / 2.
+					self.ball.y1 = self.height / 2. + self.ball.ballSize / 2.
+					self.ball.dx = random.choice([-5, 5])
+					self.ball.dy = random.choice([-5, 5])
+				elif self.containsPauseB2(event.x, event.y):
+					self.pause = False
+				self.pause = False
+
+			
+
+
+	def onMouseMove(self, event):
+		#deals with mouse movement events
+		if self.page == "mainMenu":
+			self.Settings.controlColor = "lightblue"
+			self.Controls.controlColor = "lightblue"
+			if self.buttons.containsB1(event.x, event.y):
+				self.buttons.button1Color = "white"
+				self.buttons.text1Color = "black"
+				self.buttons.button2Color = "lightblue"
+				self.buttons.text2Color = "black"
+				self.buttons.button3Color = "lightblue"
+				self.buttons.text3Color = "black"
+				self.buttons.button4Color = "lightblue"
+				self.buttons.text4Color = "black"
+			elif self.buttons.containsB2(event.x, event.y):
+				self.buttons.button1Color = "lightblue"
+				self.buttons.text1Color = "black"
+				self.buttons.button2Color = "white"
+				self.buttons.text2Color = "black"
+				self.buttons.button3Color = "lightblue"
+				self.buttons.text3Color = "black"
+				self.buttons.button4Color = "lightblue"
+				self.buttons.text4Color = "black"
+			elif self.buttons.containsB3(event.x, event.y):
+				self.buttons.button1Color = "lightblue"
+				self.buttons.text1Color = "black"
+				self.buttons.button2Color = "lightblue"
+				self.buttons.text2Color = "black"
+				self.buttons.button3Color = "white"
+				self.buttons.text3Color = "black"
+				self.buttons.button4Color = "lightblue"
+				self.buttons.text4Color = "black"
+			elif self.buttons.containsB4(event.x, event.y):
+				self.buttons.button1Color = "lightblue"
+				self.buttons.text1Color = "black"
+				self.buttons.button2Color = "lightblue"
+				self.buttons.text2Color = "black"
+				self.buttons.button3Color = "lightblue"
+				self.buttons.text3Color = "black"
+				self.buttons.button4Color = "white"
+				self.buttons.text4Color = "black"
+			else:
+				self.buttons.button1Color = "lightblue"
+				self.buttons.text1Color = "black"
+				self.buttons.button2Color = "lightblue"
+				self.buttons.text2Color = "black"
+				self.buttons.button3Color = "lightblue"
+				self.buttons.text3Color = "black"
+				self.buttons.button4Color = "lightblue"
+				self.buttons.text4Color = "black"
+		elif self.page == "CONTROLS":
+			self.buttons.button3Color = "lightblue"
+			if self.Controls.containsB5(event.x, event.y):
+				self.Controls.controlColor = "white"
+			elif self.Controls.containsW(event.x, event.y):
+				self.Controls.reverseColor = "black"
+				self.Controls.Wfont = "Times 50 bold"
+				self.Controls.Sfont = "Times 60 bold"
+				self.Controls.reverseColorS = "lightblue"
+			elif self.Controls.containsS(event.x, event.y):
+				self.Controls.reverseColorS = "black"
+				self.Controls.Sfont = "Times 50 bold"
+				self.Controls.Wfont = "Times 60 bold"
+				self.Controls.reverseColor = "lightblue"
+			elif self.Controls.containsUp(event.x, event.y):
+				self.Controls.gap = 20
+				self.Controls.gap2 = 17
+				self.Controls.reverseColor = "black"
+				self.Controls.Sfont = "Times 60 bold"
+				self.Controls.Wfont = "Times 60 bold"
+				self.Controls.reverseColorS = "lightblue"
+			elif self.Controls.containsDown(event.x, event.y):
+				self.Controls.gap2 = 20
+				self.Controls.gap = 17
+				self.Controls.reverseColorS = "black"
+				self.Controls.Sfont = "Times 60 bold"
+				self.Controls.Wfont = "Times 60 bold"
+				self.Controls.reverseColor = "lightblue"
+			elif self.Controls.containsW2(event.x, event.y):
+				self.Controls.reverseColor2 = "black"
+				self.Controls.Wfont2 = "Times 50 bold"
+				self.Controls.Sfont2 = "Times 60 bold"
+				self.Controls.reverseColorS2 = "lightblue"
+			elif self.Controls.containsS2(event.x, event.y):
+				self.Controls.reverseColorS2 = "black"
+				self.Controls.Sfont2 = "Times 50 bold"
+				self.Controls.Wfont2 = "Times 60 bold"
+				self.Controls.reverseColor2 = "lightblue"
+			elif self.Controls.containsUp2(event.x, event.y):
+				self.Controls.gap4 = 20
+				self.Controls.gap3 = 17
+				self.Controls.reverseColor2 = "black"
+				self.Controls.Sfont2 = "Times 60 bold"
+				self.Controls.Wfont2 = "Times 60 bold"
+				self.Controls.reverseColorS2 = "lightblue"
+			elif self.Controls.containsDown2(event.x, event.y):
+				self.Controls.gap3 = 20
+				self.Controls.gap4 = 17
+				self.Controls.reverseColorS2 = "black"
+				self.Controls.Sfont2 = "Times 60 bold"
+				self.Controls.Wfont2 = "Times 60 bold"
+				self.Controls.reverseColor2 = "lightblue"
+			else:
+				self.Settings.controlColor = "lightblue"
+				self.Controls.reverseColorS2 = "lightblue"
+				self.Controls.controlColor2 = "lightblue"
+				self.Controls.reverseColor2 = "lightblue"
+				self.Controls.Wfont2 = "Times 60 bold"
+				self.Controls.Sfont2 = "Times 60 bold"
+				self.Controls.controlColor = "lightblue"
+				self.Controls.reverseColor = "lightblue"
+				self.Controls.Wfont = "Times 60 bold"
+				self.Controls.Sfont = "Times 60 bold"
+				self.Controls.reverseColorS = "lightblue"
+				self.Controls.gap = 17
+				self.Controls.gap2 = 17
+				self.Controls.gap4 = 17
+				self.Controls.gap3 = 17
+		elif self.page == "SETTINGS":
+			self.buttons.button4Color = "lightblue"
+			if self.Settings.containsB6(event.x, event.y):
+				self.Settings.controlColor = "white"
+			else:
+				self.Settings.controlColor = "lightblue"
+		elif self.page == "1PLAYER" or self.page == "2PLAYER":
+			self.buttons.button1Color = "lightblue"
+			self.buttons.button2Color = "lightblue"
+			self.Settings.controlColor = "lightblue"
+			if self.pause == True:
+				if self.containsPauseB1(event.x, event.y):
+					self.pauseB1 = "white"
+					self.pauseB2 = "black"
+				elif self.containsPauseB2(event.x, event.y):
+					self.pauseB2 = "white"
+					self.pauseB1 = "black"
+				else:
+					self.pauseB1 = "black"
+					self.pauseB2 = "black"
+			elif self.pause == False:
+				self.pauseB1 = "black"
+				self.pauseB2 = "black"
+
+
+
+	def drawMenu(self, canvas):
+		#draws the main menu
+		self.mainMenu.drawBackground(canvas)
+		self.mainMenu.drawTitle(canvas)
+		self.buttons.draw(canvas)
+
+	def drawGameOver(self, canvas):
+		#checks to see if the max score has been reached
+		x0 = self.width / 2.
+		x1 = self.width / 2.
+		y0 = 0
+		y1 = 10
+		canvas.create_text(self.width / 2., int(3/5. * self.height), \
+			text= "PRESS 'SPACE' TO PLAY AGAIN", font = "Chalkduster 20", fill="black")
+		canvas.create_text(self.width / 2., self.height / 2.,\
+		 text = self.gameOver(), fill = "black", font = "Chalkduster 70")
+		canvas.create_text(self.width/2., int(5.65/10. * self.height), \
+			text= "PRESS 'M' TO GO TO MAIN MENU", font = "Chalkduster 20", fill = "black")
+
+
+	def onStep(self):
+		#this is timerfired()
+		if self.gameOver() == False:
+			if self.page == "1PLAYER":
+				if self.moveUp == True:
+					self.player1Paddle.movePaddle(-1 * PADDLESPEED)
+				elif self.moveDown == True:
+					self.player1Paddle.movePaddle(PADDLESPEED)
+				if self.firstMove == False and self.pause == False:
+					self.ball.startPlaying(Settings)
+					self.allignBall()
+					self.moveObject()
+			elif self.page == "2PLAYER":
+				if self.moveUp == True:
+					self.player1Paddle.movePaddle(-1 * PADDLESPEED)
+				elif self.moveDown == True:
+					self.player1Paddle.movePaddle(PADDLESPEED)
+				if self.moveUp2 == True:
+					self.player2Paddle.movePaddle(-1 * PADDLESPEED)
+				elif self.moveDown2 == True:
+					self.player2Paddle.movePaddle(PADDLESPEED)
+				if self.firstMove == False and self.pause == False:
+					self.ball.startPlaying(Settings)
+					self.allignBall()
+					self.moveObject()
+		elif self.gameOver() == False and self.pause == True:
+			self.firstMove = True
+
+	def onDraw(self, canvas):
+		#this is redrawAll()
+		if self.page == "mainMenu":
+			self.drawMenu(canvas)
+		elif self.page == "1PLAYER" or self.page == "2PLAYER":
+			self.mainMenu.drawBackground(canvas)
+			self.onePlayer.draw(canvas)
+			self.ball.draw(canvas, Settings)
+			self.player1Paddle.draw(canvas, Settings)
+			self.player2Paddle.draw(canvas, Settings)
+			if self.gameOver() == False and self.pause == False:
+				if self.firstMove == True:
+					self.onePlayer.drawStartText(canvas)
+			elif self.gameOver() != False:
+				self.drawGameOver(canvas)
+			elif self.pause == True:
+				self.drawPause(canvas)	
+		elif self.page == "CONTROLS":
+			self.mainMenu.drawBackground(canvas)
+			self.Controls.drawControls(canvas)
+		elif self.page == "SETTINGS":
+			self.Settings.difficulty()
+			self.mainMenu.drawBackground(canvas)
+			self.Settings.drawSettings(canvas)
+
+
+
+	def hitsPaddle1(self, ball):
+		#checks to see if the bal makes contact with the left paddle
+		center_y = (self.ball.y0 + self.ball.y1) / 2.
+		if int(round(self.player1Paddle.x1)) - 1 <= int(self.ball.x0) <= int(round(self.player1Paddle.x1)) + 1:
+
+
+			if int(self.ball.y1) in self.player1Paddle.topCorner:
+	
+				return "top_corner"
+			elif center_y in self.player1Paddle.upperPortion:
+	
+				return "upper_portion"
+			elif center_y in self.player1Paddle.middlePortion:
+	
+				return "middle_portion"
+			elif center_y in self.player1Paddle.lowerPortion:
+	
+				return "lower_portion"
+			elif int(self.ball.y0) in self.player1Paddle.bottomCorner:
+	
+				return "bottom_corner"
+			elif center_y < (self.player1Paddle.y0 + self.player1Paddle.y1) / 2.:
+				return "top_corner"
+			else:
+				return "bottom_corner"
+	
+			
+	
+		
+		
+	def hitsPaddle2(self, ball):
+		#checks to see if the ball makes contact with the right paddle
+		center_y = (self.ball.y0 + self.ball.y1) / 2.
+		if self.ball.x1 == int(round(self.player2Paddle.x1)):
+
+			if int(self.ball.y1) in self.player2Paddle.topCorner:
+	
+				return "top_corner"
+			elif center_y in self.player2Paddle.upperPortion:
+	
+				return "upper_portion"
+			elif center_y in self.player2Paddle.middlePortion:
+	
+				return "middle_portion"
+			elif center_y in self.player2Paddle.lowerPortion:
+	
+				return "lower_portion"
+			elif int(self.ball.y0) in self.player2Paddle.bottomCorner:
+	
+				return "bottom_corner"
+			elif center_y < (self.player2Paddle.y0 + self.player2Paddle.y1) / 2.:
+				return "top_corner"
+			else:
+				return "bottom_corner"
+			
+			
+
+
+	def allignBall(self):
+		#puts the ball on the outside of the paddle if its next step would be past the paddle
+		if self.player1Paddle.x0 + self.Settings.SPEED * self.ball.dx -1 <= self.ball.x0 <= self.player1Paddle.x1 + 1 and \
+		   self.player1Paddle.y0 - 10 <= (self.ball.y0 + self.ball.y1)/ 2. \
+			<= self.player1Paddle.y1 + 10:
+
+		#this is the right paddle alignment
+		   	self.ball.x0 = int(round(self.player1Paddle.x1))
+		   	self.ball.x1 = int(round(self.player1Paddle.x1 + self.width / 80.))
+		 
+			if not (self.player1Paddle.y0 - 10 <= (self.ball.y0 + self.ball.y1)/ 2.  <= self.player1Paddle.y1 + 10):
+				if (self.ball.y0 + self.ball.y1)/2. > self.player1Paddle.y1:
+		
+					self.ball.y0 = int(round(self.player1Paddle.y1)) + 3
+					self.ball.y1 = int(round(self.player1Paddle.y1 + self.ball.ballSize)) + 3
+				elif (self.ball.y0 + self.ball.y1)/2. < self.player1Paddle.y0:
+					self.ball.y0 = int(round(self.player1Paddle.y0)) - 3
+					self.ball.y1 = int(round(self.player1Paddle.y0 - self.ball.ballSize)) - 3
+		
+			self.changeBall()
+		elif self.player2Paddle.x1 -1 <= self.ball.x1 <= self.player2Paddle.x1 + self.width/ 80. + self.Settings.SPEED * self.ball.dx  and \
+		     self.player2Paddle.y0 - 10 <= (self.ball.y0 + self.ball.y1)/ 2. <= self.player2Paddle.y1 + 10:
+		     #this is the left paddle alignment
+
+			self.ball.x1 = int(round(self.player2Paddle.x1))
+			self.ball.x0 = int(round(self.player2Paddle.x1 - self.width / 80.))
+
+			if not self.player2Paddle.y0  - 10 <= (self.ball.y0 + self.ball.y1)/ 2. <= self.player2Paddle.y1  + 10:
+				#y0 and y1 for player 2 paddle are reversed
+				if (self.ball.y0 + self.ball.y1)/2. > self.player2Paddle.y0:
+		
+					self.ball.y0 = int(round(self.player2Paddle.y0))
+					self.ball.y1 = int(round(self.player2Paddle.y0 + self.ball.ballSize))
+				elif (self.ball.y0 + self.ball.y1)/2. < self.player2Paddle.y1:
+					self.ball.y0 = int(round(self.player2Paddle.y1))
+					self.ball.y1 = int(round(self.player2Paddle.y1 - self.ball.ballSize))
+		
+			self.changeBall()
+
+
+
+	def onKey(self, event):
+		#binds key events
+		if self.page == "1PLAYER" or self.page == "2PLAYER":
+			if event.keysym == "Escape":
+				self.pause = not self.pause
+			if event.char == " ":
+				self.firstMove = False
+			if self.firstMove == False:
+				if self.page == "1PLAYER":
+					if event.keysym == "Up" or event.keysym == "w":
+						self.moveUp = True 
+					elif event.keysym == "Down" or event.keysym =="s":
+						self.moveDown = True
+				elif self.page == "2PLAYER":
+					if event.keysym == "Up":
+						self.moveUp2 = True 
+					if event.keysym == "Down":
+						self.moveDown2 = True
+					if event.keysym == "w":
+						self.moveUp = True
+					if event.keysym == "s":
+						self.moveDown = True
+		if self.gameOver() != False:
+			if event.char == " ":
+				self.resetAll()
+				time.sleep(.2)
+			if event.char == "m":
+				self.page = "mainMenu"
+				self.resetAll()
+		# if self.firstMove ==True:
+		# 	self.pause = False
+
+
+	def resetAll(self):
+		#helper function that is called when a new game is started right after one finishes
+		self.onePlayer.p1score = 0
+		self.onePlayer.p2score = 0
+		self.player1Paddle.x0 = self.width/30. + 50
+		self.player1Paddle.y0 = self.height / 2. - 2 * self.width/30.
+		self.player1Paddle.x1 = 1.2 * self.width/30. + 50
+		self.player1Paddle.y1 = self.height / 2. + 2 * self.width/30.
+		self.player2Paddle.x0 = self.width - self.width/30. - 50
+		self.player2Paddle.y0 = self.height / 2. - 2 * self.width/30.
+		self.player2Paddle.x1 = self.width - 1.2 * self.width/30. - 50
+		self.player2Paddle.y1 = self.height / 2. + 2 * self.width/30.
+		self.firstMove = True
+		self.pause = False
+
+	def onKeyRelease(self, event):
+		#key release binding
+		if self.page == "1PLAYER":
+			if event.keysym == "Up" or event.keysym == "w":
+				self.moveUp = False
+			elif event.keysym == "Down" or event.keysym == "s":
+				self.moveDown = False
+		elif self.page == "2PLAYER":
+			if event.keysym == "Up":
+				self.moveUp2 = False 
+			elif event.keysym == "Down":
+				self.moveDown2 = False
+			if event.keysym == "w":
+				self.moveUp = False
+			elif event.keysym == "s":
+				self.moveDown = False
+
+
+		
+	def changeBall(self):
+		#changes the direction of the ball based on where the ball hits the paddle
+		if self.hitsPaddle1(ball) == "top_corner":
+			self.ball.dy = random.choice([-7, -8, -9])
+			self.ball.dx = random.choice([18, 19, 20])
+		elif self.hitsPaddle1(ball) == "upper_portion":
+			self.ball.dy = random.choice([-4, -5, -6])
+			self.ball.dx = random.choice([13, 14, 15])
+		elif self.hitsPaddle1(ball) == "middle_portion":
+
+			self.ball.dx =  13
+		elif self.hitsPaddle1(ball) == "lower_portion":
+			self.ball.dy = random.choice([4, 5, 6])
+			self.ball.dx = random.choice([13, 14, 15])
+		elif self.hitsPaddle1(ball) == "bottom_corner":
+			self.ball.dy = random.choice([7, 8, 9])
+			self.ball.dx = random.choice([18, 19, 20])
+		elif self.hitsPaddle2(ball) == "top_corner":
+			self.ball.dy = random.choice([-7, -8, -9])
+			self.ball.dx = -13
+		elif self.hitsPaddle2(ball) == "upper_portion":
+			self.ball.dy = random.choice([-4, -5, -6])
+			self.ball.dx = -1 * random.choice([15, 16, 17])
+		elif self.hitsPaddle2(ball) == "middle_portion":
+
+			self.ball.dx = random.choice([-10, -11])
+		elif self.hitsPaddle2(ball) == "lower_portion":
+			self.ball.dy = random.choice([4, 5, 6])
+			self.ball.dx = -1 * random.choice([10, 11, 12])
+		elif self.hitsPaddle2(ball) == "bottom_corner":
+
+			self.ball.dy = random.choice([7, 8, 9])
+			self.ball.dx = -1 * random.choice([18, 19, 20])
+		
+
+	def moveObject(self):
+		# more AI stuff
+		if self.page == "1PLAYER":
+			paddleMiddle = (self.player2Paddle.y0 + self.player2Paddle.y1) / 2.
+			if self.ball.dx > 0 and self.ball.x0 > RESPONSE:
+				if not -self.Settings.AILEVEL < ((self.player2Paddle.y0 + self.player2Paddle.y1) / 2. \
+				       - self.player2Paddle.predictY(ball)) < self.Settings.AILEVEL:
+					if self.player2Paddle.predictY(ball) > \
+					(self.player2Paddle.y0 + self.player2Paddle.y1) / 2.:
+						self.player2Paddle.y0 += self.Settings.AILEVEL
+						self.player2Paddle.y1 += self.Settings.AILEVEL
+					elif self.player2Paddle.predictY(ball) < \
+					(self.player2Paddle.y0 + self.player2Paddle.y1) / 2.:
+						self.player2Paddle.y0 -= self.Settings.AILEVEL
+						self.player2Paddle.y1 -= self.Settings.AILEVEL
+			#below is the recovery speed if recovery is on (paddle recovers towards the middle after contact)
+			elif self.ball.dx < 0 and self.ball.x0 < RESPONSE and paddleMiddle < self.height/2. - self.Settings.AILEVEL and self.Settings.RECOVERSPOT == True:
+					self.player2Paddle.y0 += 15
+					self.player2Paddle.y1 += 15
+			elif self.ball.dx < 0 and self.ball.x0 < RESPONSE and paddleMiddle > self.height/2. + self.Settings.AILEVEL and self.Settings.RECOVERSPOT == True:
+					self.player2Paddle.y0 -= 15
+					self.player2Paddle.y1 -= 15
+
+		if self.ball.x1 < -self.Settings.SPEED * 200 or self.ball.x0 -self.Settings.SPEED * 200 > self.width + 5:
+			#gameOver sequence
+			if self.ball.x1 < -50:
+				self.onePlayer.p2score += 1
+				self.gameOver()
+			elif self.ball.x0 -50 > self.width:
+				self.onePlayer.p1score += 1
+				self.gameOver()
+			self.ball.x0 = self.width / 2. - self.ball.ballSize / 2.
+			self.ball.y0 = self.height / 2. - self.ball.ballSize / 2.
+			self.ball.x1 = self.width / 2. + self.ball.ballSize / 2.
+			self.ball.y1 = self.height / 2. + self.ball.ballSize / 2.
+			self.ball.dx = random.choice([-5, 5])
+			self.ball.dy = random.choice([-5, 5])
+
+	def drawPause(self, canvas):
+		x0 = self.width / 3.
+		x1 = 2/3. * self.width
+		y0 = .32 * self.height
+		y1 = .68 * self.height
+		x2 = (x0 + x1) / 2.
+		length = y1 - y0
+		y2 = y0 + .32 * length
+		y3 = y0 + .68 * length
+		r = 110
+		canvas.create_rectangle(x0, y0, x1, y1, fill= "grey80", width = 5)
+		canvas.create_rectangle(x2 - r, y2 - .2 * r, x2 + r, y2 + .2 * r, fill= "grey80", outline = "grey80")
+		canvas.create_rectangle(x2 - r, y3 - .2 * r, x2 + r, y3 + .2 * r, fill= "grey80", outline = "grey80")
+		canvas.create_text(x2, y2, text= "MAIN MENU", font = "Chalkduster 35 bold", fill = self.pauseB1)
+		canvas.create_text(x2, y3, text= "RESUME", font = "Chalkduster 35 bold", fill = self.pauseB2)
+
+	def containsPauseB1(self, x, y):
+		x0 = self.width / 3.
+		x1 = 2/3. * self.width
+		y0 = .32 * self.height
+		y1 = .68 * self.height
+		x2 = (x0 + x1) / 2.
+		length = y1 - y0
+		y2 = y0 + .32 * length
+		y3 = y0 + .68 * length
+		r = 110
+		return x2 - r <= x <= x2 + r and y2 - .3 * r <= y <= y2 + .3 * r
+
+	def containsPauseB2(self, x, y):
+		x0 = self.width / 3.
+		x1 = 2/3. * self.width
+		y0 = .32 * self.height
+		y1 = .68 * self.height
+		x2 = (x0 + x1) / 2.
+		length = y1 - y0
+		y2 = y0 + .32 * length
+		y3 = y0 + .68 * length
+		r = 110
+
+		return x2 - r <= x <= x2 + r and y3 - .3 * r <= y <= y3 + .3 * r
+
+	def gameOver(self):
+
+		if self.page == "1PLAYER":
+			if self.onePlayer.p1score == SCORE:
+				if self.Settings.insaneColor == "blue":
+					self.Settings.victory = True
+					if self.Settings.BOn == "white":
+						self.Settings.BOff = "blue"
+				return "YOU WIN!"
+			elif self.onePlayer.p2score == SCORE:
+				return "YOU LOSE"
+		elif self.page =="2PLAYER":
+			if self.onePlayer.p1score == SCORE:
+				return "PLAYER 1 WINS!"
+			elif self.onePlayer.p2score == SCORE:
+				return "PLAYER 2 WINS!"
+		return False
+
+
+		
+
+
+LetsPlayPong(width=1.3 * 840, height= 1.5 * 460, timerDelay= 30).run()
+
